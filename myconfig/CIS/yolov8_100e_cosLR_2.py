@@ -1,5 +1,5 @@
 _base_ = (
-    "../../configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py"
+    "/CV/gaobiaoli/project/mmyolo/configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py"
 )
 
 metainfo = dict(
@@ -17,7 +17,7 @@ metainfo = dict(
     )
 )
 data_root = "/CV/gaobiaoli/dataset/CIS-Dataset"
-resume = True
+resume = False
 work_dir = "work_dirs"
 model = dict(
     bbox_head=dict(
@@ -42,12 +42,12 @@ train_dataloader = dict(
     num_workers=10,
 )
 
-auto_scale_lr = dict(enable=True,base_batch_size=8*16)
+# auto_scale_lr = dict(enable=True,base_batch_size=8*16)
 default_hooks = dict(
     param_scheduler=dict(
         lr_factor=0.01,
         max_epochs=100,
-        scheduler_type='linear')
+        scheduler_type='mix')
 )
 train_cfg = dict(
     dynamic_intervals=[
