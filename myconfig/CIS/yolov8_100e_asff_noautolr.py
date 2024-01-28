@@ -38,7 +38,7 @@ train_dataloader = dict(
     num_workers=16,
 )
 
-auto_scale_lr = dict(enable=True, base_batch_size=8 * 16)
+# auto_scale_lr = dict(enable=True, base_batch_size=8 * 16)
 default_hooks = dict(
     param_scheduler=dict(lr_factor=0.01, max_epochs=100, scheduler_type="linear")
 )
