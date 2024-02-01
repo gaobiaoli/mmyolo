@@ -1,4 +1,4 @@
-_base_ = "../../configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py"
+_base_ = "../../configs/yolov8/yolov8_n_syncbn_fast_8xb16-500e_coco.py"
 
 metainfo = dict(
     classes=(
@@ -21,10 +21,6 @@ resume = False
 work_dir = "work_dirs"
 model = dict(
     bbox_head=dict(head_module=dict(num_classes=10)),
-    neck=[
-        _base_.model.neck,
-        dict(type="ASFFNeck", widen_factor=_base_.widen_factor, use_att="ASFF_sim"),
-    ],
     train_cfg=dict(assigner=dict(num_classes=10)),
 )
 
@@ -129,7 +125,7 @@ custom_hooks = [
 ]
 
 test_dataloader = dict(
-    batch_size=16,
+    batch_size=2,
     dataset=dict(
         ann_file="annotations/test.json",
         backend_args=None,
@@ -141,7 +137,7 @@ test_dataloader = dict(
 test_evaluator = dict(ann_file=data_root + "/annotations/test.json")
 
 val_dataloader = dict(
-    batch_size=16,
+    batch_size=2,
     dataset=dict(
         ann_file="annotations/val.json",
         backend_args=None,
