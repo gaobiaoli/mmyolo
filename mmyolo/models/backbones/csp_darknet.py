@@ -436,6 +436,7 @@ class YOLOv8AKCSPDarknet(YOLOv8CSPDarknet):
 
     def __init__(self,
                  arch: str = 'P5',
+                 stage_with_ak: List[bool]=[True,True,True,True],
                  last_stage_out_channels: int = 1024,
                  plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
@@ -448,6 +449,7 @@ class YOLOv8AKCSPDarknet(YOLOv8CSPDarknet):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
+        self.stage_with_ak = stage_with_ak
         super().__init__(
             arch=arch,
             last_stage_out_channels=last_stage_out_channels,
@@ -476,12 +478,20 @@ class YOLOv8AKCSPDarknet(YOLOv8CSPDarknet):
         out_channels = make_divisible(out_channels, self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
         stage = []
-        conv_layer = AKConvModule(
-            in_channels,
-            out_channels,
-            kernel_size=3,
-            stride=2,
-            )
+        if self.stage_with_ak[stage_idx]:
+            conv_layer = AKConvModule(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                stride=2,
+                )
+        else:
+            conv_layer = ConvModule(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                stride=2,
+                )
         stage.append(conv_layer)
         csp_layer = CSPLayerWithTwoConv(
             out_channels,
