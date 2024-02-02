@@ -14,21 +14,23 @@ metainfo = dict(
         "wheel-loader",
     )
 )
-# data_root = "/CV/gaobiaoli/dataset/CIS-Dataset"
-data_root = "/root/autodl-tmp"
+data_root = "/CV/gaobiaoli/dataset/CIS-Dataset"
+# data_root = "/root/autodl-tmp"
 
 resume = False
 work_dir = "work_dirs"
 model = dict(
     backbone=dict(
         _delete_ = True,
+        stage_with_ak=[False,True,False,False],
+
         act_cfg=dict(inplace=True, type='SiLU'),
         arch='P5',
-        deepen_factor=0.33,
+        deepen_factor=_base_.deepen_factor,
         last_stage_out_channels=1024,
         norm_cfg=dict(eps=0.001, momentum=0.03, type='BN'),
         type='YOLOv8AKCSPDarknet',
-        widen_factor=0.5),
+        widen_factor=_base_.widen_factor),
     bbox_head=dict(head_module=dict(num_classes=10)),
     neck=[
         _base_.model.neck,
