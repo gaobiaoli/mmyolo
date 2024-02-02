@@ -482,7 +482,7 @@ class YOLOv8AKCSPDarknet(YOLOv8CSPDarknet):
             conv_layer = AKConvModule(
                 in_channels,
                 out_channels,
-                kernel_size=3,
+                kernel_size=9,
                 stride=2,
                 )
         else:
