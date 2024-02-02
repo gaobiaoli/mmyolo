@@ -23,7 +23,6 @@ model = dict(
     backbone=dict(
         _delete_ = True,
         stage_with_ak=[False,True,False,False],
-
         act_cfg=dict(inplace=True, type='SiLU'),
         arch='P5',
         deepen_factor=_base_.deepen_factor,
