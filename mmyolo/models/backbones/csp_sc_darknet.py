@@ -140,7 +140,6 @@ class SCCSPLayerWithTwoConv(BaseModule):
                 kernel_size=(3, 3),
                 padding=(1, 1),
                 add_identity=add_identity,
-                use_depthwise=False,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg) for _ in range(num_blocks))
