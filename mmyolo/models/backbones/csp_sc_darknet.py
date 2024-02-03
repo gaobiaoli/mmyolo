@@ -153,7 +153,7 @@ class SCCSPLayerWithTwoConv(BaseModule):
         return self.final_conv(torch.cat(x_main, 1))
 
 @MODELS.register_module()
-class YOLOv8SCCSPSCDarknet(BaseBackbone):
+class YOLOv8SCCSPDarknet(BaseBackbone):
     """CSP-Darknet backbone used in YOLOv8.
 
     Args:
@@ -276,7 +276,7 @@ class YOLOv8SCCSPSCDarknet(BaseBackbone):
             act_cfg=self.act_cfg,
         )
         stage.append(conv_layer)
-        csp_layer = CSPLayerWithTwoConv(
+        csp_layer = SCCSPLayerWithTwoConv(
             out_channels,
             out_channels,
             num_blocks=num_blocks,
