@@ -14,8 +14,8 @@ metainfo = dict(
         "wheel-loader",
     )
 )
-# data_root = "/CV/gaobiaoli/dataset/CIS-Dataset"
-data_root = "/root/autodl-tmp"
+data_root = "/CV/gaobiaoli/dataset/CIS-Dataset"
+# data_root = "/root/autodl-tmp"
 
 resume = False
 work_dir = "work_dirs"

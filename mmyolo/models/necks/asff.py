@@ -87,6 +87,7 @@ class ASFF(nn.Module):
         self,
         level,
         type="ASFF",
+        in_channels=[256, 512, 1024],
         asff_channel=2,
         expand_kernel=3,
         multiplier=1,
@@ -105,9 +106,9 @@ class ASFF(nn.Module):
         self.type = type
 
         self.dim = [
-            int(1024 * multiplier),
-            int(512 * multiplier),
-            int(256 * multiplier),
+            int(in_channels[2] * multiplier),
+            int(in_channels[1] * multiplier),
+            int(in_channels[0] * multiplier),
         ]
 
         Conv = BaseConv
@@ -117,27 +118,27 @@ class ASFF(nn.Module):
         if self.type == "ASFF":
             if level == 0:
                 self.stride_level_1 = Conv(
-                    int(512 * multiplier), self.inter_dim, 3, 2, act=act
+                    int(in_channels[1] * multiplier), self.inter_dim, 3, 2, act=act
                 )
 
                 self.stride_level_2 = Conv(
-                    int(256 * multiplier), self.inter_dim, 3, 2, act=act
+                    int(in_channels[0] * multiplier), self.inter_dim, 3, 2, act=act
                 )
 
             elif level == 1:
                 self.compress_level_0 = Conv(
-                    int(1024 * multiplier), self.inter_dim, 1, 1, act=act
+                    int(in_channels[2] * multiplier), self.inter_dim, 1, 1, act=act
                 )
                 self.stride_level_2 = Conv(
-                    int(256 * multiplier), self.inter_dim, 3, 2, act=act
+                    int(in_channels[0] * multiplier), self.inter_dim, 3, 2, act=act
                 )
 
             elif level == 2:
                 self.compress_level_0 = Conv(
-                    int(1024 * multiplier), self.inter_dim, 1, 1, act=act
+                    int(in_channels[2] * multiplier), self.inter_dim, 1, 1, act=act
                 )
                 self.compress_level_1 = Conv(
-                    int(512 * multiplier), self.inter_dim, 1, 1, act=act
+                    int(in_channels[1] * multiplier), self.inter_dim, 1, 1, act=act
                 )
             else:
                 raise ValueError("Invalid level {}".format(level))
@@ -254,15 +255,27 @@ class ASFF(nn.Module):
         out = self.expand(fused_out_reduced)
 
         return out
-    
+
+
 from mmyolo.registry import MODELS
+
+
 @MODELS.register_module()
 class ASFFNeck(nn.Module):
-    def __init__(self, widen_factor, use_att='ASFF', asff_channel=2, expand_kernel=3, act='silu'):
+    def __init__(
+        self,
+        widen_factor,
+        in_channels=[256, 512, 1024],
+        use_att="ASFF",
+        asff_channel=2,
+        expand_kernel=3,
+        act="silu",
+    ):
         super().__init__()
         self.asff_1 = ASFF(
             level=0,
             type=use_att,
+            in_channels=in_channels,
             asff_channel=asff_channel,
             expand_kernel=expand_kernel,
             multiplier=widen_factor,
@@ -271,6 +284,7 @@ class ASFFNeck(nn.Module):
         self.asff_2 = ASFF(
             level=1,
             type=use_att,
+            in_channels=in_channels,
             asff_channel=asff_channel,
             expand_kernel=expand_kernel,
             multiplier=widen_factor,
@@ -279,6 +293,7 @@ class ASFFNeck(nn.Module):
         self.asff_3 = ASFF(
             level=2,
             type=use_att,
+            in_channels=in_channels,
             asff_channel=asff_channel,
             expand_kernel=expand_kernel,
             multiplier=widen_factor,
