@@ -21,13 +21,18 @@ resume = False
 work_dir = "work_dirs"
 model = dict(
     backbone=dict(
-        _delete_ = True,
+        plugins=[
+            dict(
+                cfg=dict(
+                    type='CBAM'),
+                stages=(True, True, True, True))
+        ],
         act_cfg=dict(inplace=True, type='SiLU'),
         arch='P5',
         deepen_factor=_base_.deepen_factor,
         last_stage_out_channels=1024,
         norm_cfg=dict(eps=0.001, momentum=0.03, type='BN'),
-        type='YOLOv8SCCSPDarknet',
+        type='YOLOv8CSPDarknet',
         widen_factor=_base_.widen_factor),
     bbox_head=dict(head_module=dict(num_classes=10)),
     neck=[
@@ -46,7 +51,7 @@ train_dataloader = dict(
         data_root=data_root,
         metainfo=metainfo,
     ),
-    num_workers=16,
+    num_workers=12,
 )
 
 # auto_scale_lr = dict(enable=True, base_batch_size=8 * 16)
