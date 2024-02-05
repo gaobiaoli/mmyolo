@@ -30,7 +30,7 @@ model = dict(
         dict(
             # _delete_=True,
             type='mmyolo.models.necks.bifpn.BiFPN',
-            num_stages=5,
+            num_stages=6,
             in_channels=neck_in_channels,
             out_channels=512 * _base_.widen_factor,
             norm_cfg=_base_.norm_cfg)],
