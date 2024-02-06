@@ -43,7 +43,7 @@ model = dict(
     neck=[
         dict(
             type='mmyolo.models.necks.bifpn.BiFPN',
-            num_stages=6,
+            num_stages=4,
             in_channels=neck_in_channels,
             out_channels=512 * _base_.widen_factor,
             norm_cfg=_base_.norm_cfg),
@@ -61,7 +61,7 @@ train_dataloader = dict(
         data_root=data_root,
         metainfo=metainfo,
     ),
-    num_workers=8,
+    num_workers=16,
 )
 
 # auto_scale_lr = dict(enable=True, base_batch_size=8 * 16)
