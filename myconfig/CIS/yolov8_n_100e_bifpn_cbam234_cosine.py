@@ -14,7 +14,6 @@ metainfo = dict(
         "wheel-loader",
     )
 )
-
 # data_root = "/CV/gaobiaoli/dataset/CIS-Dataset"
 data_root = "/root/autodl-tmp"
 
@@ -44,7 +43,7 @@ model = dict(
     neck=dict(
             _delete_=True,
             type='mmyolo.models.necks.bifpn.BiFPN',
-            num_stages=4,
+            num_stages=6,
             in_channels=neck_in_channels,
             out_channels=512 * _base_.widen_factor,
             norm_cfg=_base_.norm_cfg),
@@ -61,12 +60,12 @@ train_dataloader = dict(
         data_root=data_root,
         metainfo=metainfo,
     ),
-    num_workers=2,
+    num_workers=16,
 )
 
 # auto_scale_lr = dict(enable=True, base_batch_size=8 * 16)
 default_hooks = dict(
-    param_scheduler=dict(lr_factor=0.01, max_epochs=100, scheduler_type="mix")
+    param_scheduler=dict(lr_factor=0.01, max_epochs=100, scheduler_type="cosine")
 )
 train_cfg = dict(
     dynamic_intervals=[
