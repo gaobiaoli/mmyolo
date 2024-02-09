@@ -49,7 +49,7 @@ model = dict(
             norm_cfg=_base_.norm_cfg),
     train_cfg=dict(assigner=dict(num_classes=10)),
 )
-base_lr = 0.004
+base_lr = 0.01
 weight_decay = 0.05
 optim_wrapper = dict(
     _delete_ = True,

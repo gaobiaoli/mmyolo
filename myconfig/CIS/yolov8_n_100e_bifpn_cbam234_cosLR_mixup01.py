@@ -70,6 +70,7 @@ train_pipeline = [
     dict(
         type='YOLOv5MixUp',
         use_cached=True,
+        prob=0.1,
         max_cached_images=20),
     *_base_.last_transform
 ]

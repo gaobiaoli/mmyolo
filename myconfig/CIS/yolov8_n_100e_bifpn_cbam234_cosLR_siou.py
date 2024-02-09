@@ -39,7 +39,10 @@ model = dict(
     bbox_head=dict(
         head_module=dict(
             num_classes=10,
-            in_channels=[512 for _ in range(3)])),
+            in_channels=[512 for _ in range(3)]),
+        loss_bbox=dict(
+                type='IoULoss',
+                iou_mode='siou')),
     neck=dict(
             _delete_=True,
             type='mmyolo.models.necks.bifpn.BiFPN',
@@ -47,17 +50,9 @@ model = dict(
             in_channels=neck_in_channels,
             out_channels=512 * _base_.widen_factor,
             norm_cfg=_base_.norm_cfg),
+        # dict(type="ASFFNeck", widen_factor=_base_.widen_factor, use_att="ASFF_sim"),
     train_cfg=dict(assigner=dict(num_classes=10)),
 )
-base_lr = 0.004
-weight_decay = 0.05
-optim_wrapper = dict(
-    _delete_ = True,
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=base_lr, weight_decay=weight_decay),
-    paramwise_cfg=dict(
-        norm_decay_mult=0, bias_decay_mult=0, bypass_duplicate=True))
-
 
 train_dataloader = dict(
     batch_size=32,
