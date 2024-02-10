@@ -15,6 +15,7 @@ def bbox_overlaps(pred: torch.Tensor,
                   iou_mode: str = 'ciou',
                   bbox_format: str = 'xywh',
                   siou_theta: float = 4.0,
+                  stride: torch.Tensor = None,
                   eps: float = 1e-7) -> torch.Tensor:
     r"""Calculate overlap between two set of bboxes.
     `Implementation of paper `Enhancing Geometric Factors into
@@ -44,7 +45,7 @@ def bbox_overlaps(pred: torch.Tensor,
     Returns:
         Tensor: shape (n, ).
     """
-    assert iou_mode in ('iou', 'ciou', 'giou', 'siou')
+    assert iou_mode in ('iou', 'ciou', 'giou', 'siou', 'mpdiou')
     assert bbox_format in ('xyxy', 'xywh')
     if bbox_format == 'xywh':
         pred = HorizontalBoxes.cxcywh_to_xyxy(pred)
@@ -147,7 +148,11 @@ def bbox_overlaps(pred: torch.Tensor,
                                    1 - torch.exp(-1 * omiga_h), siou_theta)
 
         ious = ious - ((distance_cost + shape_cost) * 0.5)
-
+    elif iou_mode == 'mpdiou':
+        hw = (640/stride)**2+(640/stride)**2
+        d1 = (bbox2_x1 - bbox1_x1) ** 2 + (bbox2_y1 - bbox1_y1) ** 2
+        d2 = (bbox2_x2 - bbox1_x2) ** 2 + (bbox2_y2 - bbox1_y2) ** 2
+        ious=ious - d1 / hw - d2 / hw  # MPDIoU
     return ious.clamp(min=-1.0, max=1.0)
 
 
@@ -176,7 +181,7 @@ class IoULoss(nn.Module):
                  return_iou: bool = True):
         super().__init__()
         assert bbox_format in ('xywh', 'xyxy')
-        assert iou_mode in ('ciou', 'siou', 'giou')
+        assert iou_mode in ('ciou', 'siou', 'giou', 'mpdiou')
         self.iou_mode = iou_mode
         self.bbox_format = bbox_format
         self.eps = eps
@@ -190,7 +195,8 @@ class IoULoss(nn.Module):
         target: torch.Tensor,
         weight: Optional[torch.Tensor] = None,
         avg_factor: Optional[float] = None,
-        reduction_override: Optional[Union[str, bool]] = None
+        reduction_override: Optional[Union[str, bool]] = None,
+        stride: Optional[torch.Tensor] = None,
     ) -> Tuple[Union[torch.Tensor, torch.Tensor], torch.Tensor]:
         """Forward function.
 
@@ -222,6 +228,7 @@ class IoULoss(nn.Module):
             target,
             iou_mode=self.iou_mode,
             bbox_format=self.bbox_format,
+            stride=stride,
             eps=self.eps)
         loss = self.loss_weight * weight_reduce_loss(1.0 - iou, weight,
                                                      reduction, avg_factor)
