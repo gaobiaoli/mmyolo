@@ -369,13 +369,16 @@ class YOLOv8Head(YOLOv5Head):
             bbox_weight = torch.masked_select(
                 assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
             # 
-            pred_stride=self.stride_tensor.repeat([1,fg_mask_pre_prior.shape[0]]).transpose(1,0)
-            pred_stride=torch.masked_select(
-                pred_stride, fg_mask_pre_prior).reshape([-1])
+            # pred_stride=self.stride_tensor.repeat([1,fg_mask_pre_prior.shape[0]]).transpose(1,0)
+            # pred_stride=torch.masked_select(
+            #     pred_stride, fg_mask_pre_prior).reshape([-1])
+            # loss_bbox = self.loss_bbox(
+            #     pred_bboxes_pos, assigned_bboxes_pos,
+            #     weight=bbox_weight, stride=pred_stride) / assigned_scores_sum
             #
             loss_bbox = self.loss_bbox(
                 pred_bboxes_pos, assigned_bboxes_pos,
-                weight=bbox_weight, stride=pred_stride) / assigned_scores_sum
+                weight=bbox_weight) / assigned_scores_sum
 
             # dfl loss
             pred_dist_pos = flatten_dist_preds[fg_mask_pre_prior]
