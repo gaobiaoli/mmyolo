@@ -15,6 +15,7 @@ def bbox_overlaps(pred: torch.Tensor,
                   iou_mode: str = 'ciou',
                   bbox_format: str = 'xywh',
                   siou_theta: float = 4.0,
+                  inner_ratio :float=1.0,
                   stride: torch.Tensor = None,
                   eps: float = 1e-7) -> torch.Tensor:
     r"""Calculate overlap between two set of bboxes.
@@ -80,6 +81,19 @@ def bbox_overlaps(pred: torch.Tensor,
 
     enclose_w = enclose_wh[..., 0]  # cw
     enclose_h = enclose_wh[..., 1]  # ch
+
+    # Inner
+    ratio=inner_ratio
+    x1, y1, x2, y2 = bbox1_x1, bbox1_y1, bbox2_x1, bbox2_y1
+    w1_, h1_, w2_, h2_ = w1 / 2, h1 / 2, w2 / 2, h2 / 2
+    inner_b1_x1, inner_b1_x2, inner_b1_y1, inner_b1_y2 = x1 - w1_ * ratio, x1 + w1_ * ratio, \
+                                                            y1 - h1_ * ratio, y1 + h1_ * ratio
+    inner_b2_x1, inner_b2_x2, inner_b2_y1, inner_b2_y2 = x2 - w2_ * ratio, x2 + w2_ * ratio, \
+                                                            y2 - h2_ * ratio, y2 + h2_ * ratio
+    inner_inter = (torch.min(inner_b1_x2, inner_b2_x2) - torch.max(inner_b1_x1, inner_b2_x1)).clamp(0) * \
+                    (torch.min(inner_b1_y2, inner_b2_y2) - torch.max(inner_b1_y1, inner_b2_y1)).clamp(0)
+    inner_union = w1 * ratio * h1 * ratio + w2 * ratio * h2 * ratio - inner_inter + eps
+    ious = inner_inter / inner_union
 
     if iou_mode == 'ciou':
         # CIoU = IoU - ( (ρ^2(b_pred,b_gt) / c^2) + (alpha x v) )
@@ -178,10 +192,12 @@ class IoULoss(nn.Module):
                  eps: float = 1e-7,
                  reduction: str = 'mean',
                  loss_weight: float = 1.0,
+                 inner_ratio: float=1.0,
                  return_iou: bool = True):
         super().__init__()
         assert bbox_format in ('xywh', 'xyxy')
         assert iou_mode in ('ciou', 'siou', 'giou', 'mpdiou')
+        self.inner_ratio = inner_ratio
         self.iou_mode = iou_mode
         self.bbox_format = bbox_format
         self.eps = eps
@@ -229,6 +245,7 @@ class IoULoss(nn.Module):
             iou_mode=self.iou_mode,
             bbox_format=self.bbox_format,
             stride=stride,
+            inner_ratio=self.inner_ratio,
             eps=self.eps)
         loss = self.loss_weight * weight_reduce_loss(1.0 - iou, weight,
                                                      reduction, avg_factor)
