@@ -39,7 +39,11 @@ model = dict(
     bbox_head=dict(
         head_module=dict(
             num_classes=10,
-            in_channels=[512 for _ in range(3)])),
+            in_channels=[512 for _ in range(3)]),
+        loss_bbox=dict(
+                type='IoULoss',
+                inner_ratio=1.0,
+                iou_mode='ciou')),
     neck=dict(
             _delete_=True,
             type='mmyolo.models.necks.bifpn.BiFPN',
@@ -81,72 +85,7 @@ train_cfg = dict(
 custom_hooks = [
     dict(
         switch_epoch=90,
-        switch_pipeline=[
-            dict(backend_args=None, type="LoadImageFromFile"),
-            dict(type="LoadAnnotations", with_bbox=True),
-            dict(
-                scale=(
-                    640,
-                    640,
-                ),
-                type="YOLOv5KeepRatioResize",
-            ),
-            dict(
-                allow_scale_up=True,
-                pad_val=dict(img=114.0),
-                scale=(
-                    640,
-                    640,
-                ),
-                type="LetterResize",
-            ),
-            dict(
-                border_val=(
-                    114,
-                    114,
-                    114,
-                ),
-                max_aspect_ratio=100,
-                max_rotate_degree=0.0,
-                max_shear_degree=0.0,
-                scaling_ratio_range=(
-                    0.5,
-                    1.5,
-                ),
-                type="YOLOv5RandomAffine",
-            ),
-            dict(
-                bbox_params=dict(
-                    format="pascal_voc",
-                    label_fields=[
-                        "gt_bboxes_labels",
-                        "gt_ignore_flags",
-                    ],
-                    type="BboxParams",
-                ),
-                keymap=dict(gt_bboxes="bboxes", img="image"),
-                transforms=[
-                    dict(p=0.01, type="Blur"),
-                    dict(p=0.01, type="MedianBlur"),
-                    dict(p=0.01, type="ToGray"),
-                    dict(p=0.01, type="CLAHE"),
-                ],
-                type="mmdet.Albu",
-            ),
-            dict(type="YOLOv5HSVRandomAug"),
-            dict(prob=0.5, type="mmdet.RandomFlip"),
-            dict(
-                meta_keys=(
-                    "img_id",
-                    "img_path",
-                    "ori_shape",
-                    "img_shape",
-                    "flip",
-                    "flip_direction",
-                ),
-                type="mmdet.PackDetInputs",
-            ),
-        ],
+        switch_pipeline=_base_.train_pipeline_stage2,
         type="mmdet.PipelineSwitchHook",
     ),
 ]

@@ -16,7 +16,6 @@ def bbox_overlaps(pred: torch.Tensor,
                   bbox_format: str = 'xywh',
                   siou_theta: float = 4.0,
                   inner_ratio :float=1.0,
-                  stride: torch.Tensor = None,
                   eps: float = 1e-7) -> torch.Tensor:
     r"""Calculate overlap between two set of bboxes.
     `Implementation of paper `Enhancing Geometric Factors into
@@ -46,7 +45,7 @@ def bbox_overlaps(pred: torch.Tensor,
     Returns:
         Tensor: shape (n, ).
     """
-    assert iou_mode in ('iou', 'ciou', 'giou', 'siou', 'mpdiou')
+    assert iou_mode in ('iou', 'ciou', 'giou', 'siou')
     assert bbox_format in ('xyxy', 'xywh')
     if bbox_format == 'xywh':
         pred = HorizontalBoxes.cxcywh_to_xyxy(pred)
@@ -83,17 +82,17 @@ def bbox_overlaps(pred: torch.Tensor,
     enclose_h = enclose_wh[..., 1]  # ch
 
     # Inner
-    ratio=inner_ratio
-    x1, y1, x2, y2 = bbox1_x1, bbox1_y1, bbox2_x1, bbox2_y1
-    w1_, h1_, w2_, h2_ = w1 / 2, h1 / 2, w2 / 2, h2 / 2
-    inner_b1_x1, inner_b1_x2, inner_b1_y1, inner_b1_y2 = x1 - w1_ * ratio, x1 + w1_ * ratio, \
-                                                            y1 - h1_ * ratio, y1 + h1_ * ratio
-    inner_b2_x1, inner_b2_x2, inner_b2_y1, inner_b2_y2 = x2 - w2_ * ratio, x2 + w2_ * ratio, \
-                                                            y2 - h2_ * ratio, y2 + h2_ * ratio
-    inner_inter = (torch.min(inner_b1_x2, inner_b2_x2) - torch.max(inner_b1_x1, inner_b2_x1)).clamp(0) * \
-                    (torch.min(inner_b1_y2, inner_b2_y2) - torch.max(inner_b1_y1, inner_b2_y1)).clamp(0)
-    inner_union = w1 * ratio * h1 * ratio + w2 * ratio * h2 * ratio - inner_inter + eps
-    ious = inner_inter / inner_union
+    # ratio=inner_ratio
+    # x1, y1, x2, y2 = bbox1_x1, bbox1_y1, bbox2_x1, bbox2_y1
+    # w1_, h1_, w2_, h2_ = w1 / 2, h1 / 2, w2 / 2, h2 / 2
+    # inner_b1_x1, inner_b1_x2, inner_b1_y1, inner_b1_y2 = x1 - w1_ * ratio, x1 + w1_ * ratio, \
+    #                                                         y1 - h1_ * ratio, y1 + h1_ * ratio
+    # inner_b2_x1, inner_b2_x2, inner_b2_y1, inner_b2_y2 = x2 - w2_ * ratio, x2 + w2_ * ratio, \
+    #                                                         y2 - h2_ * ratio, y2 + h2_ * ratio
+    # inner_inter = (torch.min(inner_b1_x2, inner_b2_x2) - torch.max(inner_b1_x1, inner_b2_x1)).clamp(0) * \
+    #                 (torch.min(inner_b1_y2, inner_b2_y2) - torch.max(inner_b1_y1, inner_b2_y1)).clamp(0)
+    # inner_union = w1 * ratio * h1 * ratio + w2 * ratio * h2 * ratio - inner_inter + eps
+    # inner_ious = inner_inter / inner_union
 
     if iou_mode == 'ciou':
         # CIoU = IoU - ( (ρ^2(b_pred,b_gt) / c^2) + (alpha x v) )
@@ -116,7 +115,6 @@ def bbox_overlaps(pred: torch.Tensor,
 
         with torch.no_grad():
             alpha = wh_ratio / (wh_ratio - ious + (1 + eps))
-
         # CIoU
         ious = ious - ((rho2 / enclose_area) + (alpha * wh_ratio))
 
@@ -162,11 +160,7 @@ def bbox_overlaps(pred: torch.Tensor,
                                    1 - torch.exp(-1 * omiga_h), siou_theta)
 
         ious = ious - ((distance_cost + shape_cost) * 0.5)
-    elif iou_mode == 'mpdiou':
-        hw = (640/stride)**2+(640/stride)**2
-        d1 = (bbox2_x1 - bbox1_x1) ** 2 + (bbox2_y1 - bbox1_y1) ** 2
-        d2 = (bbox2_x2 - bbox1_x2) ** 2 + (bbox2_y2 - bbox1_y2) ** 2
-        ious=ious - d1 / hw - d2 / hw  # MPDIoU
+    
     return ious.clamp(min=-1.0, max=1.0)
 
 
@@ -196,7 +190,7 @@ class IoULoss(nn.Module):
                  return_iou: bool = True):
         super().__init__()
         assert bbox_format in ('xywh', 'xyxy')
-        assert iou_mode in ('ciou', 'siou', 'giou', 'mpdiou')
+        assert iou_mode in ('ciou', 'siou', 'giou')
         self.inner_ratio = inner_ratio
         self.iou_mode = iou_mode
         self.bbox_format = bbox_format
@@ -244,7 +238,6 @@ class IoULoss(nn.Module):
             target,
             iou_mode=self.iou_mode,
             bbox_format=self.bbox_format,
-            stride=stride,
             inner_ratio=self.inner_ratio,
             eps=self.eps)
         loss = self.loss_weight * weight_reduce_loss(1.0 - iou, weight,
